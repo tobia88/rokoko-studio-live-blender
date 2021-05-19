@@ -417,6 +417,17 @@ class RetargetAnimation(bpy.types.Operator):
         wm = bpy.context.window_manager
         wm.progress_begin(current_step, steps)
 
+        # Preventing baking error for Blender 2.92
+        prev_modes = {}
+
+        for pbone in armature_source.pose.bones:
+            prev_modes[pbone] = pbone.rotation_mode
+            pbone.rotation_mode = "QUATERNION"
+
+        for pbone in armature_target.pose.bones:
+            prev_modes[pbone] = pbone.rotation_mode
+            pbone.rotation_mode = "QUATERNION"
+
         import time
         start_time = time.time()
 
@@ -440,6 +451,13 @@ class RetargetAnimation(bpy.types.Operator):
             current_step += 1
             if steps != current_step:
                 wm.progress_update(current_step)
+
+        # Reset bone rotation mode for Blender 2.92
+        for pbone in armature_source.pose.bones:
+            pbone.rotation_mode = prev_modes[pbone]
+
+        for pbone in armature_target.pose.bones:
+            pbone.rotation_mode = prev_modes[pbone]
 
         if not actions_all:
             return
